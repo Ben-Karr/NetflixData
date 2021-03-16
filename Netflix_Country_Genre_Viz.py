@@ -9,7 +9,6 @@ from dash.dependencies import Input, Output, State
 
 from pathlib import Path
 
-from collections import Counter #Count actors
 
 # Load Data
 src_path = Path('data/netflix_titles.csv')
@@ -60,17 +59,26 @@ def filter_df(df,
     return df_tmp
 
 def get_heatmap(df):
-    trace0 = go.Heatmap(
-    x = df.columns.tolist(),
-    y = df.index.values.tolist(),
-    z = df.values
-    )
 
-    data = [trace0]
-
+    data = [go.Heatmap(
+        x = df.columns.tolist(),
+        y = df.index.values.tolist(),
+        z = df.values,
+        colorscale = 'Jet'
+        )
+    ]
 
     layout = go.Layout(
-        title = 'Number of shows per Country by Genre'
+        title = 'Number of shows per Country by Genre',
+        plot_bgcolor = 'rgb(56,56,56)',
+        paper_bgcolor = 'rgb(56,56,56)',
+        font = dict(
+            color = 'white'
+        ),
+        margin = dict(
+            l = 100,
+            pad = 0
+        )
     )
 
     return data, layout
@@ -84,6 +92,11 @@ def get_stacked_bar(df, stacked = True):
 
     layout = go.Layout(
         title = 'Number of shows per Country by Genre',
+        plot_bgcolor = 'rgb(56,56,56)',
+        paper_bgcolor = 'rgb(56,56,56)',     
+        font = dict(
+            color = 'white'
+        )        
     )
 
     if stacked:
@@ -98,63 +111,116 @@ shows_per_genre = df.groupby(['listed_in'])['title'].nunique().to_frame().sort_v
 df = filter_df(df)
 
 data, layout = get_stacked_bar(df)
-print('Hello')
-print(type(data), type(layout))
+
 
 ## Start App
-app = dash.Dash()
+app = dash.Dash(__name__)
 
-app.layout = html.Div([
-    html.Div([
-        html.H3('Pick the countries you are interested in:'),
-        dcc.Dropdown(
-            id = 'country-dropdown',
-            options = country_options,
-            value = ['Germany','Brazil', 'United States'],
-            multi = True
-        )
-    ]),
-    html.Div([
-        html.H3('Pick the genres you are interested in:'),
-        dcc.Dropdown(
-            id = 'genre-dropdown',
-            options = genre_options,
-            value = ['Action & Adventure', 'Comedies'],
-            multi = True
-        )
-    ]),
-    html.Div([
-        html.H3('Choose a visualization'),
-        dcc.RadioItems(
-            id = 'viz-radio',
-            options = [
-                {'label': 'Heatmap', 'value': 'heat'},
-                {'label': 'Stacked Barchart', 'value': 'stacked'},
-                {'label': 'Grouped Barchart', 'value': 'grouped'},                
-            ],
-            value = 'heat'
-        )
-    ]),
-    html.Div([
-        html.H3('Absolute number of shows or percentage'),
-        dcc.RadioItems(
-            id = 'rel-radio',
-            options = [
-                {'label': 'Absolute', 'value': 'abs'},
-                {'label': 'Percentage by country', 'value': 'rel-country'},
-                {'label': 'Percentage by genre', 'value': 'rel-genre'},   
-            ],
-            value = 'abs'
-        )
-    ]),
-    dcc.Graph(
-        id = 'content-graph',
-        figure = dict(
-            data = data,
-            layout = layout
-        )
+#app.css.config.serve_locally = True
+#app.scripts.config.serve_locally = True
+
+app.layout = html.Div(
+    children = [
+        html.Div(
+            dcc.Markdown('''## Netflix Data Visualization'''),
+            style = dict(
+                textAlign = 'center',
+                color = 'red'
+                )
+        ),
+        html.Hr(),
+        html.Div(
+            className = 'content',
+            children = [
+                dcc.Markdown(
+                    ''' ### Select Countries '''
+                    ),
+                dcc.Markdown(
+                    ''' Pick the countries you are interested in. 
+                    Choose from a list or search for the country name to 
+                    add to the list, remove from the list by clicking the `x`.
+                    '''
+                    ),
+                dcc.Dropdown(
+                    id = 'country-dropdown',
+                    options = country_options,
+                    className = 'dropdown-group',
+                    value = ['Germany','Brazil', 'United States'],
+                    multi = True
+                    ),
+                dcc.Markdown(
+                    ''' ### Select Genres '''
+                    ),
+                dcc.Markdown(
+                    '''Pick the genres you are interested in. Choose from 
+                    a list or search for the genre name to add to the list, 
+                    remove from the list by clicking the `x`.''',
+                    ),
+                dcc.Dropdown(
+                    id = 'genre-dropdown',
+                    options = genre_options,
+                    value = ['Action & Adventure', 'Comedies'],
+                    multi = True
+                    ),
+                dcc.Markdown(
+                    ''' ### Select visualization''',
+                    ),
+                dcc.RadioItems(
+                    id = 'viz-radio',
+                    options = [
+                        {'label': 'Heatmap', 'value': 'heat'},
+                        {'label': 'Stacked Barchart', 'value': 'stacked'},
+                        {'label': 'Grouped Barchart', 'value': 'grouped'},                
+                        ],
+                    value = 'heat',
+                    labelStyle = {'display': 'block'}
+                    ),
+                dcc.Markdown(
+                    ''' ### Select presentation '''
+                    ),
+                dcc.Markdown(
+                    '''Pick if you want the absolute or relative values. 
+                    "Percentage by country" divides the number of shows for a 
+                    particular genre and country by the total number of shows in that country. 
+                    "Percentage by genre" divides the number of shows for a particular genre 
+                    and country by the total number of shows for that genre. This might be confusing in 
+                    combination with a bar chart.''',
+                    ),
+                dcc.RadioItems(
+                    id = 'rel-radio',
+                    options = [
+                        {'label': 'Absolute', 'value': 'abs'},
+                        {'label': 'Percentage by country', 'value': 'rel-country'},
+                        {'label': 'Percentage by genre', 'value': 'rel-genre'},   
+                        ],
+                    value = 'abs',
+                    labelStyle = {'display': 'block'}
+                    )
+                ],
+            style = dict(
+                width = '18%', 
+                float = 'left',
+                fontSize = 12
+                )
+            ),
+        html.Div(
+            className = 'content',
+            children = [
+                dcc.Graph(
+                    id = 'content-graph',
+                    figure = dict(
+                        data = data,
+                        layout = layout,
+                        )
+                    )
+                ], 
+            style = dict(
+                width = '80%',
+                float = 'right',
+                )
+            )
+        ],
     )
-])
 
 @app.callback(
     Output('content-graph','figure'),
@@ -173,7 +239,6 @@ def update_content(country_choices, genre_choices, viz_choice, rel_choice):
               keep_genres = genre_choices,
               relative = rel_choice
               )
-    print(df)
 
     if viz_choice == 'heat':
         data, layout = get_heatmap(df)
@@ -192,4 +257,4 @@ def update_content(country_choices, genre_choices, viz_choice, rel_choice):
     return fig
 
 if __name__ == '__main__':
-    app.run_server()
+    app.run_server(debug = True)

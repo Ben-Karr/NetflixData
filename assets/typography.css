@@ -1,0 +1,21 @@
+body {
+    background-color: rgb(25, 25, 25);
+    color: white;
+    font-family: 'Verdana';
+    font-size: 12;
+}
+
+.Select-control {
+    background-color: rgb(56, 56, 56) !important;
+  }  
+
+.Select-menu-outer {
+    background-color: rgb(56, 56, 56);
+  }
+
+.content {
+  background-color: rgb(56, 56, 56);
+  border-style: solid;
+  border-width: thin;
+}
+ 
